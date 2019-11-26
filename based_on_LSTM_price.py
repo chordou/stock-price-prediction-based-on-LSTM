@@ -1,4 +1,4 @@
-import tushare as ts
+mport tushare as ts
 import numpy as np
 import pandas as pd
 import math
@@ -23,7 +23,7 @@ df = bs.query_history_k_data_plus("sh.600019",
 print('query_history_k_data_plus respond error_code:'+df.error_code)
 print('query_history_k_data_plus respond  error_msg:'+df.error_msg)
 
-#### 打印结果集 ####
+
 data_list = []
 while (df.error_code == '0') & df.next():
     # 获取一条记录，将记录合并在一起
@@ -51,15 +51,15 @@ for i in range(data.shape[0]):
         data[i,j] = float(data[i,j])
 data.astype(float)
 
-# 隐层神经元的个数
+
 rnn_unit = 10
-# 隐层层数
+
 lstm_layers = 2
-# 输入层维度
+
 input_size = 5
-# 输出层维度
+
 output_size = 1
-lr = 0.001  # 学习率
+lr = 0.001
 
 save_name ='.model.ckpt'
 cpt_name ='/home/cqiuac/'
@@ -67,16 +67,16 @@ cpt_name ='/home/cqiuac/'
 def get_train_data(batch_size=60, time_step=20, train_begin=0, train_end=2000):
     batch_index = []
     data_train = data[train_begin:train_end]
-    # 标准化
+
     data_train = np.array(data_train, dtype=np.float32)
     normalized_train_data = (data_train - np.mean(data_train, axis=0)) / np.std(data_train, axis=0)
-    # 以时间步（20）获取训练集
+
     train_x, train_y = [], []
     for i in range(len(normalized_train_data) - time_step):
         if i % batch_size == 0:
             batch_index.append(i)
         x = normalized_train_data[i:i + time_step, :5]
-        # 增加维度
+
         y = normalized_train_data[i:i + time_step, 5, np.newaxis]
         train_x.append(x.tolist())
         train_y.append(y.tolist())
@@ -88,8 +88,8 @@ def get_test_data(time_step=20, test_begin=2001):
     data_test = np.array(data_test, dtype=np.float64)
     mean = np.mean(data_test, axis=0)
     std = np.std(data_test, axis=0)
-    normalized_test_data = (data_test - mean) / std  # 标准化
-    size = (len(normalized_test_data) + time_step - 1) // time_step  # 有size个sample
+    normalized_test_data = (data_test - mean) / std
+    size = (len(normalized_test_data) + time_step - 1) // time_step
     test_x, test_y = [], []
     for i in range(size - 1):
         x = normalized_test_data[i * time_step:(i + 1) * time_step, :5]
@@ -116,7 +116,7 @@ keep_prob = tf.placeholder(tf.float32, name='keep_prob')
 
 
 def lstmCell():
-    # basicLstm单元
+
     basicLstm = tf.nn.rnn_cell.BasicLSTMCell(rnn_unit)
     # dropout
     drop = tf.nn.rnn_cell.DropoutWrapper(basicLstm, output_keep_prob=keep_prob)
@@ -128,9 +128,9 @@ def lstm(X):
     time_step = tf.shape(X)[1]
     w_in = weights['in']
     b_in = biases['in']
-    input = tf.reshape(X, [-1, input_size])  # 需要将tensor转成2维进行计算，计算后的结果作为隐藏层的输入
+    input = tf.reshape(X, [-1, input_size])
     input_rnn = tf.matmul(input, w_in) + b_in
-    input_rnn = tf.reshape(input_rnn, [-1, time_step, rnn_unit])  # 将tensor转成3维，作为lstm cell的输入
+    input_rnn = tf.reshape(input_rnn, [-1, time_step, rnn_unit])
     cell = tf.nn.rnn_cell.MultiRNNCell([lstmCell() for i in range(lstm_layers)])
     init_state = cell.zero_state(batch_size, dtype=tf.float32)
     output_rnn, final_states = tf.nn.dynamic_rnn(cell, input_rnn, initial_state=init_state, dtype=tf.float32)
@@ -140,7 +140,7 @@ def lstm(X):
     pred = tf.matmul(output, w_out) + b_out
     return pred, final_states
 
-#训练模型：
+
 
 def train_lstm(save_name,batch_size=60, time_step=20, train_begin=2000, train_end=6500):
     X = tf.placeholder(tf.float32, shape=[None, time_step, input_size])
@@ -154,7 +154,7 @@ def train_lstm(save_name,batch_size=60, time_step=20, train_begin=2000, train_en
 
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
-        for i in range(1000):  # 这个迭代次数，可以更改，越大预测效果会更好，但需要更长时间
+        for i in range(1000):
             for step in range(len(batch_index) - 1):
                 _, loss_ = sess.run([train_op, loss], feed_dict={X: train_x[batch_index[step]:batch_index[step + 1]],
                                                                  Y: train_y[batch_index[step]:batch_index[step + 1]],
@@ -170,7 +170,7 @@ def prediction(time_step=1):
         pred, _ = lstm(X)
     saver = tf.train.Saver(tf.global_variables())
     with tf.Session() as sess:
-        # 参数恢复
+
         module_file = tf.train.latest_checkpoint(cpt_name)
         saver.restore(sess, module_file)
         test_predict = []
@@ -181,9 +181,9 @@ def prediction(time_step=1):
         test_y = np.array(test_y) * std[5] + mean[5]
         test_predict = np.array(test_predict) * std[5] + mean[5]
         # print(test_predict.tolist())
-        acc = np.average(np.abs(test_predict - test_y[:len(test_predict)]) / test_y[:len(test_predict)])  # 偏差程度
+        acc = np.average(np.abs(test_predict - test_y[:len(test_predict)]) / test_y[:len(test_predict)])
         print("The accuracy of this predict:", acc)
-        # 以折线图表示结果
+
         plt.figure()
         plt.plot(list(range(len(test_predict))), test_predict, color='b', )
         plt.plot(list(range(len(test_y))), test_y, color='r')

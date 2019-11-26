@@ -81,7 +81,7 @@ cpt_name ='/home/cqiuac/'
 
 
 
-#generating the standardized training data
+
 def get_train_data(batch_size=60, time_step=20, train_begin=0, train_end=2000):#float(n*train_ratio)):
     batch_index=[]
     data_train=data[train_begin:train_end]
@@ -98,7 +98,7 @@ def get_train_data(batch_size=60, time_step=20, train_begin=0, train_end=2000):#
     batch_index.append((len(normalized_train_data)-time_step))
     return batch_index,train_x,train_y
 
-#generating the standardized test data
+
 def get_test_data(time_step=20, test_begin=2001):#float(n*train_ratio)):
     data_test=data[test_begin:]
     data_test = np.array(data_test, dtype=np.float64)
@@ -116,7 +116,7 @@ def get_test_data(time_step=20, test_begin=2001):#float(n*train_ratio)):
         test_y.extend((normalized_test_data[(i+1)*time_step:,input_size]).tolist())
     return mean,std,test_x,test_y
 
-#setting the weights and biases
+
 weights={
          'in':tf.Variable(tf.random_normal([input_size,rnn_unit])),
          'out':tf.Variable(tf.random_normal([rnn_unit,1]))
@@ -126,7 +126,7 @@ biases={
         'out':tf.Variable(tf.constant(0.1,shape=[1,]))
        }
 
-#set the LSTM model
+
 def lstm(X):
     batch_size = tf.shape(X)[0]
     time_step = tf.shape(X)[1]
@@ -144,7 +144,7 @@ def lstm(X):
     pred = tf.matmul(output, w_out) + b_out
     return pred, final_states
 
-#generating the training function
+
 def train_lstm(save_name, batch_size=60, time_step=20, train_begin=0, train_end=2000,iteration=10):#float(n*train_ratio), iteration=10):
     X=tf.placeholder(tf.float32, shape=[None,time_step,input_size])
     Y=tf.placeholder(tf.float32, shape=[None,time_step,output_size])
@@ -166,7 +166,7 @@ def train_lstm(save_name, batch_size=60, time_step=20, train_begin=0, train_end=
         print("The train has finished")
 
 
-#run the training
+
 train_lstm(save_name)
 
 
@@ -177,7 +177,7 @@ def prediction(time_step=1):
         pred, _ = lstm(X)
     saver = tf.train.Saver(tf.global_variables())
     with tf.Session() as sess:
-        # 参数恢复
+
         module_file = tf.train.latest_checkpoint(cpt_name)
         saver.restore(sess, module_file)
         test_predict = []
@@ -188,9 +188,9 @@ def prediction(time_step=1):
         test_y = np.array(test_y) * std[5] + mean[5]
         test_predict = np.array(test_predict) * std[5] + mean[5]
         # print(test_predict.tolist())
-        acc = np.average(np.abs(test_predict - test_y[:len(test_predict)]) / test_y[:len(test_predict)])  # 偏差程度
+        acc = np.average(np.abs(test_predict - test_y[:len(test_predict)]) / test_y[:len(test_predict)])
         print("The accuracy of this predict:", acc)
-        # 以折线图表示结果
+
         plt.figure()
         plt.plot(list(range(len(test_predict))), test_predict, color='b', )
         plt.plot(list(range(len(test_y))), test_y, color='r')
@@ -221,7 +221,7 @@ def plot_result(x, y,label,save_dir):
 #             new_nv.append(new_nv[-1]*(1+test_y[i])*(1-cost))
 #     return new_nv
 #
-#Prediction result
+
 test_predict,test_y = prediction()
 plot_result(test_predict, test_y,['predict return','test return'],'/home/cqiuac/worldquant_project/result1_1.png')
 
